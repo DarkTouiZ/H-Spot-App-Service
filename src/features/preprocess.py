@@ -109,6 +109,9 @@ def main():
         df["acc_rate_per_100m"] = (
             df["acc_total"] / (df["length_m"] / 100)
         ).fillna(0)
+        # Cap at 99th percentile to reduce extreme outlier influence
+        cap = df["acc_rate_per_100m"].quantile(0.99)
+        df["acc_rate_per_100m"] = df["acc_rate_per_100m"].clip(upper=cap)
 
     # Congestion severity score (weighted avg of peak-hour congestion)
     has_morning = "pct_below_20kmh_morning_peak" in df.columns
@@ -137,7 +140,8 @@ def main():
         ).fillna(0)
 
     # Log transforms for heavily skewed count features
-    for col in ["probe_count", "poi_count_200m", "building_density_200m", "acc_total"]:
+    for col in ["probe_count", "poi_count_200m", "building_density_200m", "acc_total",
+                "acc_rate_per_100m", "acc_morning_peak", "acc_evening_peak", "acc_monsoon"]:
         if col in df.columns:
             df[f"log_{col}"] = np.log1p(df[col])
 
