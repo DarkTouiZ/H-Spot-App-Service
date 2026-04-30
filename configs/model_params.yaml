@@ -1,0 +1,68 @@
+# H-Spot Bangkok: Model & Preprocessing Parameters
+# --------------------------------------------------
+
+preprocessing:
+  # Bins to drop due to data sparsity (EDA result)
+  sparse_bins_to_drop: ["night", "late_night"]
+  
+  # Default distance to POI if none found (meters)
+  default_poi_dist_m: 5000
+  
+  # Weights used for calculating the aggregate congestion_score
+  congestion_weights:
+    morning_peak: 0.35
+    daytime: 0.20
+    evening_peak: 0.35
+    night: 0.10
+
+modeling:
+  # Experiment Tracking
+  experiment_name: "Bangkok_Accident_Risk"
+  
+  # Model Selection
+  model_type: "xgboost" # Options: xgboost, random_forest
+  
+  # Hyperparameters
+  hyperparameters:
+    n_estimators: 200
+    learning_rate: 0.05
+    max_depth: 6
+    random_state: 42
+    
+  target: "is_risky"
+  features:
+    # Road Geometry
+    - highway_rank
+    - lanes
+    - length_m
+    - lanes_known
+    
+    # Traffic Behavior (Probe)
+    - probe_count
+    - log_probe_count
+    - speed_mean
+    - has_probe_data
+    - congestion_score
+    - speed_drop_morning
+    - pct_below_20kmh_morning_peak
+    - pct_below_20kmh_daytime
+    - pct_below_20kmh_evening_peak
+    
+    # Spatial Context (Surroundings)
+    - dist_intersection_m
+    - poi_count_200m
+    - log_poi_count_200m
+    - building_density_200m
+    - log_building_density_200m
+    - dist_school_m
+    - dist_hospital_m
+    - dist_fuel_m
+    - dist_mall_m
+    
+    # Historical Context
+    - acc_monsoon
+    - acc_morning_peak
+    - acc_evening_peak
+    - acc_rate_per_100m
+    - log_acc_total
+
