@@ -92,8 +92,14 @@ def main():
     # 4. Phase: Final Matrix
     if args.matrix or args.all or args.features:
         print("\n--- Phase 4: Final Matrix ---")
-        matrix_out = os.path.join(d_cfg.get("features", {}).get("output_dir"), "feature_matrix.parquet")
+        f_dir = d_cfg.get("features", {}).get("output_dir")
+        matrix_out = os.path.join(f_dir, "feature_matrix.parquet")
         run_script("src/features/build_feature_matrix.py", output_files=matrix_out, force=args.force)
+
+        # 5. Phase: Model Dataset (Preprocessing)
+        print("\n--- Phase 5: Model Dataset ---")
+        dataset_out = os.path.join(f_dir, "model_dataset.parquet")
+        run_script("src/features/preprocess.py", output_files=dataset_out, force=args.force)
 
     print("\nPipeline execution complete.")
 
