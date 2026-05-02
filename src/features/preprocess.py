@@ -139,9 +139,12 @@ def main():
             df["speed_mean_daytime"] - df["speed_mean_morning_peak"]
         ).fillna(0)
 
-    # Log transforms for heavily skewed count features
-    for col in ["probe_count", "poi_count_200m", "building_density_200m", "acc_total",
-                "acc_rate_per_100m", "acc_morning_peak", "acc_evening_peak", "acc_monsoon"]:
+    # Log transforms for heavily skewed count features and large distances
+    for col in ["probe_count", "poi_count_200m", "building_density_200m", 
+                "dist_intersection_m", "dist_school_m", "dist_hospital_m", 
+                "dist_fuel_m", "dist_mall_m",
+                "acc_total", "acc_rate_per_100m", "acc_morning_peak", 
+                "acc_evening_peak", "acc_monsoon"]:
         if col in df.columns:
             df[f"log_{col}"] = np.log1p(df[col])
 

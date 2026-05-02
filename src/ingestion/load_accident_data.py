@@ -57,10 +57,11 @@ def load_config(config_path="configs/data_sources.yaml"):
 
 
 def main():
-    config  = load_config()
-    raw_dir = config["accidents"]["raw_dir"]
+    config    = load_config("configs/data_sources.yaml")
+    inventory = load_config("configs/data_inventory.yaml")
+    raw_dir   = config["accidents"]["raw_dir"]
 
-    for dataset in config["datasets"]:
+    for dataset in inventory["datasets"]:
         year        = dataset["year"]
         resource_id = dataset["resource_id"]
         raw_path    = f"{raw_dir}/accidents_{year}.csv"
