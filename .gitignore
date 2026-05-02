@@ -1,5 +1,15 @@
-data/*
-cache/
+.DS_Store
+
+# Data and Artifacts
+data/
+/models/
+mlruns/
+.mlflow/
+mlflow.db
+
+# Python/IDE
 __pycache__/
 .vscode/
-.DS_Store
+.ipynb_checkpoints/
+cache/
+.env

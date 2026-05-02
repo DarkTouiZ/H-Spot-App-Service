@@ -1,0 +1,123 @@
+"""
+Explainable AI (XAI) — Risk Interpretation
+src/models/xai_explainer.py
+
+Calculates SHAP values for road segments and optionally generates
+natural language narratives using the LLM Narrator module.
+
+Usage:
+  python src/models/xai_explainer.py --segment_id 103470 --narrative
+"""
+
+import os
+import argparse
+import pickle
+import pandas as pd
+import numpy as np
+import shap
+import yaml
+import sys
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env
+load_dotenv()
+
+# Automatically add project root to sys.path to fix "ModuleNotFoundError: No module named 'src'"
+project_root = str(Path(__file__).resolve().parents[2])
+if project_root not in sys.path:
+    sys.path.append(project_root)
+
+# Local Imports
+from src.models.narrator import generate_explanation
+
+# Config Paths
+DATA_CFG_PATH  = "configs/data_sources.yaml"
+MODEL_CFG_PATH = "configs/model_params.yaml"
+
+def load_yaml(path):
+    with open(path) as f:
+        return yaml.safe_load(f)
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--segment_id", type=int, required=True, help="Road segment ID to explain")
+    parser.add_argument("--version", choices=["v1", "v2"], default="v2", help="Feature version to use")
+    parser.add_argument("--narrative", action=argparse.BooleanOptionalAction, 
+                        help="Enable/disable LLM narrative (overrides config)")
+    args = parser.parse_args()
+
+    # 1. Load Configurations
+    data_cfg = load_yaml(DATA_CFG_PATH)
+    model_cfg = load_yaml(MODEL_CFG_PATH)
+    
+    # Determine narrative setting: Arg > Config > Default(False)
+    expl_cfg = model_cfg.get("explanation", {})
+    should_narrate = args.narrative if args.narrative is not None else expl_cfg.get("enable_narrative", False)
+    top_k = expl_cfg.get("top_k_features", 5)
+    llm_model = expl_cfg.get("llm_model", "gemini-1.5-flash")
+
+    # 2. Load Dataset
+    features_dir = data_cfg["features"]["output_dir"]
+    data_path = os.path.join(features_dir, "model_dataset.parquet")
+    
+    print(f"Loading dataset from {data_path}...")
+    df = pd.read_parquet(data_path)
+    
+    if args.segment_id not in df['segment_id'].values:
+        print(f"Error: Segment ID {args.segment_id} not found in dataset.")
+        return
+        
+    segment_data = df[df['segment_id'] == args.segment_id]
+    
+    # 3. Load Model
+    model_path = f"models/xgboost_{args.version}_xgboost.pkl"
+    print(f"Loading model from {model_path}...")
+    with open(model_path, "rb") as f:
+        calibrated_model = pickle.load(f)
+        
+    # Get features used by model
+    feat_key = "features" if args.version == "v1" else "features_v2"
+    features = [f for f in model_cfg["modeling"][feat_key] if f in df.columns]
+    X_segment = segment_data[features]
+    
+    # Get risk prediction
+    risk_score = calibrated_model.predict_proba(X_segment)[0, 1]
+    print(f"\n" + "="*40)
+    print(f" RISK ANALYSIS FOR SEGMENT {args.segment_id}")
+    print(f" Predicted Risk: {risk_score*100:.1f}%")
+    print("="*40)
+
+    # 4. Calculate SHAP Values
+    # Extract base estimator from CalibratedClassifierCV
+    base_model = calibrated_model.calibrated_classifiers_[0].estimator
+    
+    print("\nCalculating SHAP values (local explanation)...")
+    explainer = shap.TreeExplainer(base_model)
+    shap_values = explainer.shap_values(X_segment)
+    
+    # Map features to impacts
+    impacts = dict(zip(features, shap_values[0]))
+    sorted_impacts = dict(sorted(impacts.items(), key=lambda x: abs(x[1]), reverse=True))
+    
+    print(f"\nTop {top_k} Factors driving this prediction:")
+    top_factors = {}
+    for i, (k, v) in enumerate(sorted_impacts.items()):
+        if i >= top_k: break
+        top_factors[k] = v
+        direction = "↑ Increases Risk" if v > 0 else "↓ Decreases Risk"
+        print(f"  {i+1}. {k:<25}: {v:>8.4f} ({direction})")
+
+    # 5. Optional Narrative Generation
+    if should_narrate:
+        print(f"\nGenerating narrative using {llm_model}...")
+        narrative = generate_explanation(args.segment_id, risk_score, top_factors, llm_model)
+        if narrative:
+            print("\n--- AI Narrative Explanation ---")
+            print(narrative)
+            print("-" * 32)
+    else:
+        print("\n[Note] Narrative generation is disabled (use --narrative to enable).")
+
+if __name__ == "__main__":
+    main()
