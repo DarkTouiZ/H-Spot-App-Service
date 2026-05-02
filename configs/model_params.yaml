@@ -30,6 +30,11 @@ modeling:
     random_state: 42
     
   target: "is_risky"
+
+  # ----------------------------------------------------------
+  # Version 1: Full Features (including accident history)
+  # Best accuracy but requires historical accident data
+  # ----------------------------------------------------------
   features:
     # Road Geometry
     - highway_rank
@@ -42,11 +47,8 @@ modeling:
     - log_probe_count
     - speed_mean
     - has_probe_data
-    - congestion_score
+    - congestion_score       # Replaces redundant pct_below_20kmh_* (r>0.93)
     - speed_drop_morning
-    - pct_below_20kmh_morning_peak
-    - pct_below_20kmh_daytime
-    - pct_below_20kmh_evening_peak
     
     # Spatial Context (Surroundings)
     - dist_intersection_m
@@ -59,10 +61,45 @@ modeling:
     - dist_fuel_m
     - dist_mall_m
     
-    # Historical Context
-    - acc_monsoon
-    - acc_morning_peak
-    - acc_evening_peak
-    - acc_rate_per_100m
+    # Historical Context (highly predictive — use log version for skew)
+    - log_acc_monsoon
+    - log_acc_morning_peak
+    - log_acc_evening_peak
+    - log_acc_rate_per_100m
     - log_acc_total
+
+  # ----------------------------------------------------------
+  # Version 2: No Historical Accidents
+  # Useful for new roads / planning where no history exists
+  # ----------------------------------------------------------
+  features_v2:
+    - highway_rank
+    - lanes
+    - length_m
+    - lanes_known
+    - probe_count
+    - log_probe_count
+    - speed_mean
+    - has_probe_data
+    - congestion_score
+    - speed_drop_morning
+    - log_dist_intersection_m
+    - log_poi_count_200m
+    - log_building_density_200m
+    - log_dist_school_m
+    - log_dist_hospital_m
+    - log_dist_fuel_m
+    - log_dist_mall_m
+
+explanation:
+  # Enable/Disable natural language narrative generation
+  enable_narrative: true
+  
+  # LLM Model to use
+  llm_model: "gemini-1.5-flash"
+  
+  # Number of top SHAP features to feed to the LLM
+  top_k_features: 5
+
+
 
