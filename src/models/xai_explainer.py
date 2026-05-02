@@ -39,7 +39,37 @@ def load_yaml(path):
     with open(path) as f:
         return yaml.safe_load(f)
 
+def explain_segment(segment_id, df, calibrated_model, features, top_k=5):
+    """
+    Calculates SHAP values for a given segment and returns the top_k factors.
+    Used by both the CLI and the Streamlit Dashboard.
+    """
+    segment_data = df[df['segment_id'] == segment_id]
+    if segment_data.empty:
+        raise ValueError(f"Segment ID {segment_id} not found in dataset.")
+        
+    X_segment = segment_data[features]
+    risk_score = calibrated_model.predict_proba(X_segment)[0, 1]
+    
+    # Extract base estimator from CalibratedClassifierCV
+    base_model = calibrated_model.calibrated_classifiers_[0].estimator
+    
+    explainer = shap.TreeExplainer(base_model)
+    shap_values = explainer.shap_values(X_segment)
+    
+    # Map features to impacts
+    impacts = dict(zip(features, shap_values[0]))
+    sorted_impacts = dict(sorted(impacts.items(), key=lambda x: abs(x[1]), reverse=True))
+    
+    top_factors = {}
+    for i, (k, v) in enumerate(sorted_impacts.items()):
+        if i >= top_k: break
+        top_factors[k] = v
+        
+    return risk_score, top_factors
+
 def main():
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--segment_id", type=int, required=True, help="Road segment ID to explain")
     parser.add_argument("--version", choices=["v1", "v2"], default="v2", help="Feature version to use")
@@ -89,22 +119,15 @@ def main():
     print("="*40)
 
     # 4. Calculate SHAP Values
-    # Extract base estimator from CalibratedClassifierCV
-    base_model = calibrated_model.calibrated_classifiers_[0].estimator
-    
     print("\nCalculating SHAP values (local explanation)...")
-    explainer = shap.TreeExplainer(base_model)
-    shap_values = explainer.shap_values(X_segment)
-    
-    # Map features to impacts
-    impacts = dict(zip(features, shap_values[0]))
-    sorted_impacts = dict(sorted(impacts.items(), key=lambda x: abs(x[1]), reverse=True))
-    
+    try:
+        risk_score, top_factors = explain_segment(args.segment_id, df, calibrated_model, features, top_k)
+    except ValueError as e:
+        print(e)
+        return
+        
     print(f"\nTop {top_k} Factors driving this prediction:")
-    top_factors = {}
-    for i, (k, v) in enumerate(sorted_impacts.items()):
-        if i >= top_k: break
-        top_factors[k] = v
+    for i, (k, v) in enumerate(top_factors.items()):
         direction = "↑ Increases Risk" if v > 0 else "↓ Decreases Risk"
         print(f"  {i+1}. {k:<25}: {v:>8.4f} ({direction})")
 
