@@ -140,9 +140,11 @@ def load_hotspots():
     if not HOTSPOTS_PATH.exists():
         return prototype_hotspot_data()
     hotspots = gpd.read_file(HOTSPOTS_PATH)
+    if "is_hotspot" in hotspots.columns:
+        hotspots = hotspots[hotspots["is_hotspot"] == 1].copy()
     hotspots = hotspots.to_crs("EPSG:4326")
     hotspots['path'] = hotspots['geometry'].apply(lambda geom: [[c[0], c[1]] for c in geom.coords])
-    hotspots['color'] = hotspots.apply(lambda _: [139, 0, 0, 255], axis=1) # Dark Red
+    hotspots['color'] = hotspots.apply(lambda _: [190, 30, 30, 180], axis=1)
     return hotspots
 
 @st.cache_data
@@ -243,16 +245,21 @@ def main():
             if hotspots is None:
                 st.warning("No hotspot data found. Please run the hotspot analysis script first.")
                 return
+            if hotspots.empty:
+                st.warning("No statistically significant hotspot segments found.")
+                return
+
+            st.caption(f"Currently displaying {len(hotspots):,} significant hotspot segments.")
                 
             layer = pdk.Layer(
                 "PathLayer",
                 hotspots,
                 pickable=True,
                 get_color="color",
-                width_scale=20,
-                width_min_pixels=3,
+                width_scale=8,
+                width_min_pixels=1,
                 get_path="path",
-                get_width=5,
+                get_width=2,
             )
             view_state = pdk.ViewState(latitude=13.7563, longitude=100.5018, zoom=11, pitch=0, bearing=0)
             r = pdk.Deck(
