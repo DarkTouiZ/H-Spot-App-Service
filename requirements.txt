@@ -1,0 +1,13 @@
+streamlit
+pandas
+geopandas
+pydeck
+pyyaml
+scikit-learn
+xgboost
+shap
+mlflow
+pyarrow
+fastparquet
+google-generativeai
+python-dotenv

@@ -14,6 +14,12 @@ def load_yaml(path):
             return yaml.safe_load(f)
     return {}
 
+# Ensure script is run from project root
+if not os.path.exists("src") or not os.path.exists("configs"):
+    print("Error: run_pipeline.py must be executed from the project root directory.")
+    print("Usage: python scripts/run_pipeline.py")
+    sys.exit(1)
+
 def run_script(script_path, output_files=None, force=False):
     """
     Runs a script only if its output_files don't exist, or if force is True.

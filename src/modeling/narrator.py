@@ -1,6 +1,6 @@
 """
 LLM Narrator — Traffic Safety Explanations
-src/models/narrator.py
+src/modeling/narrator.py
 
 Encapsulates the logic for calling the Gemini API to turn SHAP feature 
 impacts into human-readable narratives.

@@ -1,6 +1,6 @@
 """
 Negative Binomial Regression — Accident Count Model
-src/models/train_count.py
+src/modeling/train_count.py
 
 Predicts the EXPECTED NUMBER of accidents per road segment.
 This is the approach used in the Highway Safety Manual (HSM).

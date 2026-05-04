@@ -1,12 +1,12 @@
 """
 Explainable AI (XAI) — Risk Interpretation
-src/models/xai_explainer.py
+src/modeling/xai_explainer.py
 
 Calculates SHAP values for road segments and optionally generates
 natural language narratives using the LLM Narrator module.
 
 Usage:
-  python src/models/xai_explainer.py --segment_id 103470 --narrative
+  python src/modeling/xai_explainer.py --segment_id 103470 --narrative
 """
 
 import os
@@ -29,7 +29,7 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 
 # Local Imports
-from src.models.narrator import generate_explanation
+from src.modeling.narrator import generate_explanation
 
 # Config Paths
 DATA_CFG_PATH  = "configs/data_sources.yaml"

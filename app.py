@@ -13,8 +13,8 @@ project_root = str(Path(__file__).resolve().parent)
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-from src.models.xai_explainer import explain_segment
-from src.models.narrator import generate_explanation
+from src.modeling.xai_explainer import explain_segment
+from src.modeling.narrator import generate_explanation
 
 st.set_page_config(page_title="H-Spot Bangkok", layout="wide", initial_sidebar_state="expanded")
 

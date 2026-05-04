@@ -1,6 +1,6 @@
 """
 Production-Level Risk Scoring Training Script
-src/models/train.py
+src/modeling/train_classification.py
 
 Strategy: Probability-based Risk Scoring (not hard classification)
 1. Train XGBoost/RF with scale_pos_weight to handle imbalance (no SMOTE)
