@@ -1,15 +1,49 @@
 .DS_Store
 
-# Data and Artifacts
-data/
-/models/
-mlruns/
-.mlflow/
-mlflow.db
-
-# Python/IDE
+# ----------------------------------------
+# Python / IDE
+# ----------------------------------------
 __pycache__/
 .vscode/
 .ipynb_checkpoints/
 cache/
 .env
+
+# ----------------------------------------
+# MLflow / Tracking
+# ----------------------------------------
+mlruns/
+.mlflow/
+mlflow.db
+
+# ----------------------------------------
+# Models (Ignore all except specific models)
+# ----------------------------------------
+models/*
+!models/xgboost_v2_xgboost.pkl
+!models/xgboost_v3_pipeline.pkl
+
+# ----------------------------------------
+# Data Directory (Ignore all, explicitly whitelist needed files)
+# ----------------------------------------
+# Ignore everything in data/
+data/*
+
+# Allow processed folder to exist
+!data/processed/
+data/processed/*
+
+# Whitelist root processed files
+!data/processed/road_segments.gpkg
+
+# Allow features folder
+!data/processed/features/
+data/processed/features/*
+!data/processed/features/model_dataset.parquet
+
+# Allow results folder
+!data/processed/results/
+data/processed/results/*
+!data/processed/results/risk_scores_v2_xgboost.parquet
+!data/processed/results/risk_scores_v3.parquet
+!data/processed/results/historical_hotspots.gpkg
